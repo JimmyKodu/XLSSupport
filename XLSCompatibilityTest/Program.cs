@@ -442,34 +442,36 @@ static void ReadWithOpenXml(string filePath)
                     var firstSheet = sheets.Elements<Sheet>().First();
                     Console.WriteLine($"  First Sheet Name: {firstSheet.Name}");
                     
-                    var worksheetPart = (WorksheetPart)workbookPart.GetPartById(firstSheet.Id!);
-                    var sheetData = worksheetPart.Worksheet.Elements<SheetData>().First();
-                    
-                    var rows = sheetData.Elements<Row>().ToList();
-                    Console.WriteLine($"  Rows: {rows.Count}");
-                    
-                    if (rows.Count > 0)
+                    if (workbookPart.GetPartById(firstSheet.Id!) is WorksheetPart worksheetPart)
                     {
-                        Console.Write("  First row cells: ");
-                        var firstRow = rows[0];
-                        foreach (var cell in firstRow.Elements<Cell>())
+                        var sheetData = worksheetPart.Worksheet.Elements<SheetData>().First();
+                        
+                        var rows = sheetData.Elements<Row>().ToList();
+                        Console.WriteLine($"  Rows: {rows.Count}");
+                        
+                        if (rows.Count > 0)
                         {
-                            var value = GetCellValue(cell, workbookPart);
-                            Console.Write($"{value} | ");
+                            Console.Write("  First row cells: ");
+                            var firstRow = rows[0];
+                            foreach (var cell in firstRow.Elements<Cell>())
+                            {
+                                var value = GetCellValue(cell, workbookPart);
+                                Console.Write($"{value} | ");
+                            }
+                            Console.WriteLine();
                         }
-                        Console.WriteLine();
-                    }
-                    
-                    if (rows.Count > 1)
-                    {
-                        Console.Write("  Second row cells: ");
-                        var secondRow = rows[1];
-                        foreach (var cell in secondRow.Elements<Cell>())
+                        
+                        if (rows.Count > 1)
                         {
-                            var value = GetCellValue(cell, workbookPart);
-                            Console.Write($"{value} | ");
+                            Console.Write("  Second row cells: ");
+                            var secondRow = rows[1];
+                            foreach (var cell in secondRow.Elements<Cell>())
+                            {
+                                var value = GetCellValue(cell, workbookPart);
+                                Console.Write($"{value} | ");
+                            }
+                            Console.WriteLine();
                         }
-                        Console.WriteLine();
                     }
                 }
                 
@@ -493,9 +495,9 @@ static string GetCellValue(Cell cell, WorkbookPart workbookPart)
     if (cell.DataType != null && cell.DataType.Value == CellValues.SharedString)
     {
         var stringTable = workbookPart.SharedStringTablePart?.SharedStringTable;
-        if (stringTable != null)
+        if (stringTable != null && int.TryParse(value, out int index) && index >= 0 && index < stringTable.Count())
         {
-            value = stringTable.ElementAt(int.Parse(value)).InnerText;
+            value = stringTable.ElementAt(index).InnerText;
         }
     }
     
